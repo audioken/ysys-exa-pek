@@ -3,6 +3,7 @@
 ## Översikt av implementationerna
 
 ### **Novis-nivå**
+
 - En controller med direkta HTTP-anrop till externt API
 - Använder `IHttpClientFactory` för att skapa HTTP-klienter
 - Felhantering direkt i controllern med try-catch
@@ -11,6 +12,7 @@
 - Total: ~35 rader kod i 1 fil
 
 ### **Junior-nivå**
+
 - Controller som delegerar till en service
 - Konkret `JobsService`-klass injicerad
 - Service returnerar `object` (odefiniert typ)
@@ -20,6 +22,7 @@
 - Total: ~60 rader kod i 2 filer
 
 ### **Senior-nivå**
+
 - Controller som delegerar via `IJobService` interface
 - Service-lager (`JobService`) för affärslogik
 - Dedikerat infrastructure-lager (`IJobApiClient`) för externa anrop
@@ -34,13 +37,13 @@
 
 ## Analys utifrån SOLID-principer
 
-| **Princip** | **Novis** | **Junior** | **Senior** |
-|---|---|---|---|
-| **SRP** | ❌ Controller gör allt - HTTP-anrop, felhantering, serialisering | ⚠️ Delvis - men service returnerar `object` och hanterar HTTP-fel | ✅ Tydlig ansvarsfördelning över 3 lager |
-| **OCP** | ❌ Omöjligt att utöka utan att ändra controllern | ⚠️ Kan utökas men kräver ändringar i service | ✅ Kan utökas med nya implementationer via interfaces |
-| **LSP** | N/A | N/A | ✅ Both `IJobService` och `IJobApiClient` substituerbar |
-| **ISP** | N/A | ⚠️ Ingen interface-segregation | ✅ Fokuserade interfaces för varje ansvar |
-| **DIP** | ⚠️ Beror på `IHttpClientFactory` (bra!) men skapar HttpClient själv | ⚠️ Beror på konkret `JobsService` | ✅ Beror på abstraktioner på alla nivåer |
+| **Princip** | **Novis**                                                           | **Junior**                                                        | **Senior**                                              |
+| ----------- | ------------------------------------------------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------- |
+| **SRP**     | ❌ Controller gör allt - HTTP-anrop, felhantering, serialisering    | ⚠️ Delvis - men service returnerar `object` och hanterar HTTP-fel | ✅ Tydlig ansvarsfördelning över 3 lager                |
+| **OCP**     | ❌ Omöjligt att utöka utan att ändra controllern                    | ⚠️ Kan utökas men kräver ändringar i service                      | ✅ Kan utökas med nya implementationer via interfaces   |
+| **LSP**     | N/A                                                                 | N/A                                                               | ✅ Both `IJobService` och `IJobApiClient` substituerbar |
+| **ISP**     | N/A                                                                 | ⚠️ Ingen interface-segregation                                    | ✅ Fokuserade interfaces för varje ansvar               |
+| **DIP**     | ⚠️ Beror på `IHttpClientFactory` (bra!) men skapar HttpClient själv | ⚠️ Beror på konkret `JobsService`                                 | ✅ Beror på abstraktioner på alla nivåer                |
 
 ---
 
@@ -49,6 +52,7 @@
 ### **Separation of Concerns (SoC)**
 
 **Novis:** Allvarlig brist på separation - controllern hanterar:
+
 - HTTP-kommunikation till externt API
 - Felhantering
 - Status code-kontroll
@@ -61,6 +65,7 @@ var response = await client.GetAsync("https://jobsearch.api.jobtechdev.se/search
 ```
 
 **Junior:** Delvis separation - controllern delegerar till service, MEN:
+
 - Service returnerar `object` vilket är otydligt och otypsäkert
 - Service hanterar både HTTP-anrop OCH felmeddelanden som domänobjekt
 - Blandar infrastructure-concerns (HTTP) med business logic
@@ -100,6 +105,7 @@ Varje lager har sitt tydliga ansvar och returnerar starkt typade objekt.
 **Novis:** Ingen lagerindelning - allt i presentation-lagret. Violerar fundamentala arkitekturprinciper genom att blanda HTTP med presentation utan abstraktion.
 
 **Junior:** Två lager (Controller, Service) men med otydliga gränser:
+
 - Service gör infrastructure-arbete (HTTP-anrop)
 - Service returnerar otydlig typ (`object`)
 - Ingen transformation mellan externa och interna modeller
@@ -146,6 +152,7 @@ var response = await client.GetAsync(...);       // ❌ HTTP-logik i controller
 ```
 
 Registrering i `Program.cs`:
+
 ```csharp
 builder.Services.AddHttpClient();
 ```
@@ -157,6 +164,7 @@ public JobsController(JobsService jobsService)  // ❌ Konkret klass
 ```
 
 Registrering i `Program.cs`:
+
 ```csharp
 builder.Services.AddHttpClient<JobsService>(client =>
 {
@@ -175,6 +183,7 @@ public JobApiClient(HttpClient httpClient, ILogger<JobApiClient> logger)
 ```
 
 Registrering i `Program.cs`:
+
 ```csharp
 builder.Services.AddScoped<IJobService, JobService>();
 builder.Services.AddHttpClient<IJobApiClient, JobApiClient>();
@@ -192,6 +201,7 @@ return Content(content, "application/json");  // ❌ Rå sträng, ingen kontroll
 ```
 
 Problem:
+
 - Ingen validering av data
 - Klienten får externa API:ets format direkt
 - Ändringar i externa API:et påverkar direkt klienter
@@ -205,6 +215,7 @@ return jobs ?? new { };
 ```
 
 Problem:
+
 - Ingen typ-säkerhet
 - Ingen IntelliSense för konsumenter
 - Runtime-fel istället för compile-time
@@ -241,6 +252,7 @@ var jobs = response.Hits.Select(hit => new JobDto
 ```
 
 Fördelar:
+
 - Externa API-ändringar isolerade till infrastructure-lagret
 - Klienten får konsistent format
 - Typ-säkerhet genom hela stacken
@@ -268,6 +280,7 @@ catch (Exception ex)
 ```
 
 Problem:
+
 - Exponerar tekniska detaljer till klient
 - Ingen logging
 - Generisk felhantering
@@ -284,6 +297,7 @@ catch (Exception ex)
 ```
 
 Problem:
+
 - Blandas datastrukturer (success och error har olika format)
 - Klienten måste kontrollera om resultatet är error
 - Service returnerar `object` gör att detta inte är typkontrollerat
@@ -292,6 +306,7 @@ Problem:
 ### **Senior:** Strukturerad felhantering per lager
 
 **Infrastructure-lager** - Kastar specifika exceptions:
+
 ```csharp
 catch (HttpRequestException ex)
 {
@@ -301,6 +316,7 @@ catch (HttpRequestException ex)
 ```
 
 **Application-lager** - Loggar och Re-throw:
+
 ```csharp
 catch (Exception ex)
 {
@@ -310,6 +326,7 @@ catch (Exception ex)
 ```
 
 **Presentation-lager** - Översätter till HTTP-statuskoder:
+
 ```csharp
 catch (InvalidOperationException ex)
 {
@@ -324,6 +341,7 @@ catch (Exception ex)
 ```
 
 Fördelar:
+
 - Tydlig separation: Infrastructure kastar, Service propagerar, Controller svarar
 - Specifika exceptions för olika feltyper
 - Logging på varje nivå
@@ -334,12 +352,12 @@ Fördelar:
 
 ## Testbarhet
 
-| **Aspekt** | **Novis** | **Junior** | **Senior** |
-|---|---|---|---|
-| Unit-testning av controller | ❌ Måste mocka IHttpClientFactory OCH göra HTTP-anrop | ⚠️ Måste mocka konkret JobsService | ✅ Enkelt - mocka IJobService |
-| Unit-testning av service | N/A | ⚠️ Svårt - service gör HTTP-anrop direkt | ✅ Enkelt - mocka IJobApiClient |
-| Unit-testning av infrastructure | N/A | N/A | ✅ Enkelt - mocka HttpClient |
-| Integration-testning | ❌ Svårt - allt i en klass | ⚠️ Måste mocka både service OCH HttpClient | ✅ Tydliga gränser per lager |
+| **Aspekt**                      | **Novis**                                             | **Junior**                                 | **Senior**                      |
+| ------------------------------- | ----------------------------------------------------- | ------------------------------------------ | ------------------------------- |
+| Unit-testning av controller     | ❌ Måste mocka IHttpClientFactory OCH göra HTTP-anrop | ⚠️ Måste mocka konkret JobsService         | ✅ Enkelt - mocka IJobService   |
+| Unit-testning av service        | N/A                                                   | ⚠️ Svårt - service gör HTTP-anrop direkt   | ✅ Enkelt - mocka IJobApiClient |
+| Unit-testning av infrastructure | N/A                                                   | N/A                                        | ✅ Enkelt - mocka HttpClient    |
+| Integration-testning            | ❌ Svårt - allt i en klass                            | ⚠️ Måste mocka både service OCH HttpClient | ✅ Tydliga gränser per lager    |
 
 ### **Testexempel - Novis (Svårt)**
 
@@ -374,6 +392,7 @@ Problem: Eftersom vi mockar konkret klass utan interface, fungerar detta inte di
 ### **Testexempel - Senior (Enkelt)**
 
 **Controller test:**
+
 ```csharp
 var mockService = new Mock<IJobService>();
 mockService.Setup(s => s.GetJobsAsync(null, 10))
@@ -390,6 +409,7 @@ var result = await controller.GetJobs();
 ```
 
 **Service test:**
+
 ```csharp
 var mockApiClient = new Mock<IJobApiClient>();
 mockApiClient.Setup(c => c.SearchJobsAsync(null, 10))
@@ -408,6 +428,7 @@ var result = await service.GetJobsAsync(null, 10);
 ```
 
 **Infrastructure test:**
+
 ```csharp
 var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
 mockHttpMessageHandler
@@ -431,17 +452,20 @@ var result = await apiClient.SearchJobsAsync("Developer", 10);
 
 ### **Scenario 1: Lägg till caching av jobbsökningar**
 
-**Novis:** 
+**Novis:**
+
 - Måste ändra controllern direkt ❌
 - Lägga till cache-logik mitt i HTTP-kod ❌
 - Bryter OCP helt ❌
 
 **Junior:**
+
 - Kan lägga till i `JobsService` ⚠️
 - Men service gör redan HTTP-anrop, så cachen blandas med HTTP-logik ⚠️
 - Svårt att testa cache-logik separat ⚠️
 
 **Senior:**
+
 - Skapa `CachedJobService` som implementerar `IJobService` ✅
 - Använder decorator-pattern ✅
 - Ingen ändring i controller eller infrastructure ✅
@@ -461,13 +485,13 @@ public class CachedJobService : IJobService
     public async Task<IEnumerable<JobDto>> GetJobsAsync(string? searchQuery, int limit)
     {
         var cacheKey = $"jobs_{searchQuery}_{limit}";
-        
+
         if (_cache.TryGetValue(cacheKey, out IEnumerable<JobDto>? cachedJobs))
             return cachedJobs!;
 
         var jobs = await _innerService.GetJobsAsync(searchQuery, limit);
         _cache.Set(cacheKey, jobs, TimeSpan.FromMinutes(5));
-        
+
         return jobs;
     }
 }
@@ -482,14 +506,17 @@ OCP respekteras - ingen befintlig kod ändras.
 ### **Scenario 2: Byt till ett annat jobb-API**
 
 **Novis:**
+
 - Måste skriva om hela controllern ❌
 - Ändringar påverkar HTTP-lager direkt ❌
 
 **Junior:**
+
 - Måste ändra `JobsService` ⚠️
 - Om API-formatet ändras, påverkas controller också (eftersom service returnerar `object`) ⚠️
 
 **Senior:**
+
 - Skapa ny `AlternativeJobApiClient` som implementerar `IJobApiClient` ✅
 - Ingen ändring i service eller controller ✅
 - Datatransformation i service-lagret skyddar övre lager från ändringar ✅
@@ -501,7 +528,7 @@ public class AlternativeJobApiClient : IJobApiClient
     {
         // Anropa nytt API
         var externalData = await _httpClient.GetAsync("new-api-endpoint");
-        
+
         // Transformera till JobSearchResponse (samma format)
         return TransformToJobSearchResponse(externalData);
     }
@@ -523,13 +550,13 @@ builder.Services.AddHttpClient<IJobApiClient, AlternativeJobApiClient>();
 public async Task<IEnumerable<JobDto>> GetJobsAsync(string? searchQuery, int limit)
 {
     var response = await _jobApiClient.SearchJobsAsync(searchQuery, limit);
-    
+
     var jobs = response.Hits
         .Select(hit => new JobDto { ... })
         .Where(job => !string.IsNullOrEmpty(job.Employer))  // ✅ Lägg till filter här
         .Take(limit)
         .ToList();
-    
+
     return jobs;
 }
 ```
@@ -541,33 +568,39 @@ Affärslogik i rätt lager, ingen påverkan på andra delar.
 ## Kodens läsbarhet och Intent
 
 ### **Novis:**
+
 ```csharp
 var client = _httpClientFactory.CreateClient();
 var response = await client.GetAsync("https://jobsearch.api.jobtechdev.se/search");
 ```
 
 Problem:
+
 - Otydligt vad som händer
 - Hårdkodad URL i controller
 - Blandar HTTP-kommunikation med presentation
 
 ### **Junior:**
+
 ```csharp
 var jobs = await _jobsService.GetJobsAsync();
 return Ok(jobs);
 ```
 
 Bättre, men:
+
 - `jobs` är av typ `object` - vad är det egentligen?
 - `GetJobsAsync()` avslöjar inte vad servicen gör
 
 ### **Senior:**
+
 ```csharp
 var jobs = await _jobService.GetJobsAsync(q, limit);
 return Ok(jobs);
 ```
 
 Tydlig intent:
+
 - `jobs` är `IEnumerable<JobDto>` - tydligt vad som returneras
 - Query parameters visar att endpoint är sökbar
 - Självdokumenterande kod med XML-kommentarer
@@ -579,6 +612,7 @@ Tydlig intent:
 ### **Novis - "Funktion över struktur"**
 
 ✅ **Uppfyller förväntningarna:**
+
 - Regelsstyrt: Använder IHttpClientFactory (best practice!)
 - Begränsad situationsförståelse: Ingen separation mellan lager
 - Fokus på funktion: Hämtar och returnerar jobb som efterfrågats
@@ -589,6 +623,7 @@ Tydlig intent:
 ### **Junior - "Struktur men utan djup arkitektonisk kontroll"**
 
 ⚠️ **Uppfyller delvis, med betydande brister:**
+
 - Situationsförståelse: Förstår att använda service-lager ✅
 - Tillämpar riktlinjer: Försöker separera concerns ✅
 - Men: Service returnerar `object` visar allvarlig brist på typ-säkerhet ❌
@@ -601,6 +636,7 @@ Tydlig intent:
 ### **Senior - "Arkitektur, underhållbarhet och kodkvalitet"**
 
 ✅ **Uppfyller förväntningarna helt:**
+
 - Helhetsförståelse: Tydlig 3-lager arkitektur
 - SOLID-principer: Alla tillämpade korrekt
 - Clean Architecture: Infrastructure beror på abstraktion, inte tvärtom
@@ -617,17 +653,17 @@ Tydlig intent:
 
 ## Sammanfattande kvalitetsbedömning
 
-| **Kriterium** | **Novis** | **Junior** | **Senior** |
-|---|---|---|---|
-| Funktionalitet | ✅ Fungerar | ✅ Fungerar | ✅ Fungerar |
-| SOLID-principer | 1/5 | 2/5 | 5/5 |
-| Arkitektur (Lager) | 0/5 | 2/5 | 5/5 |
-| Testbarhet | 1/5 | 2/5 | 5/5 |
-| Underhållbarhet | 1/5 | 2/5 | 5/5 |
-| Utbyggbarhet | 1/5 | 2/5 | 5/5 |
-| Typ-säkerhet | 1/5 | 1/5 | 5/5 |
-| Felhantering | 2/5 | 2/5 | 5/5 |
-| **Totalt** | **7/40** | **13/40** | **40/40** |
+| **Kriterium**      | **Novis**   | **Junior**  | **Senior**  |
+| ------------------ | ----------- | ----------- | ----------- |
+| Funktionalitet     | ✅ Fungerar | ✅ Fungerar | ✅ Fungerar |
+| SOLID-principer    | 1/5         | 2/5         | 5/5         |
+| Arkitektur (Lager) | 0/5         | 2/5         | 5/5         |
+| Testbarhet         | 1/5         | 2/5         | 5/5         |
+| Underhållbarhet    | 1/5         | 2/5         | 5/5         |
+| Utbyggbarhet       | 1/5         | 2/5         | 5/5         |
+| Typ-säkerhet       | 1/5         | 1/5         | 5/5         |
+| Felhantering       | 2/5         | 2/5         | 5/5         |
+| **Totalt**         | **7/40**    | **13/40**   | **40/40**   |
 
 ---
 
@@ -641,6 +677,7 @@ Health endpoint-analysen visade skillnader, men **Jobs endpoint-analysen visar D
 - Jobs: Senior har **~170 extra rader** vs Junior
 
 Men dessa extra rader representerar:
+
 - Tydlig arkitektur med 3 lager
 - Typ-säkerhet genom hela stacken
 - Testbarhet utan komplexa mockar
@@ -655,6 +692,7 @@ public async Task<object> GetJobsAsync()
 ```
 
 Detta är **extremt problematiskt**:
+
 - ❌ Förlorar all typ-information vid kompilering
 - ❌ Inga IntelliSense-fördelar
 - ❌ Runtime-fel istället för compile-time
@@ -680,6 +718,7 @@ public class JobsService  // Application layer
 Detta bryter mot **Clean Architecture** där applikationslagret inte ska bero på externa detaljer som HTTP.
 
 Senior-implementationen separerar korrekt:
+
 - `JobService` (Application) - affärslogik, transformation
 - `JobApiClient` (Infrastructure) - HTTP-kommunikation
 
@@ -688,7 +727,7 @@ Senior-implementationen separerar korrekt:
 Senior har **medveten datatransformation**:
 
 ```
-External API (JobSearchResponse) 
+External API (JobSearchResponse)
     → Infrastructure Layer deserialiserar
     → Application Layer transformerar
     → Internal DTO (JobDto)
@@ -696,6 +735,7 @@ External API (JobSearchResponse)
 ```
 
 Detta skyddar systemet från externa ändringar och möjliggör:
+
 - Filtrering av känslig data
 - Anpassning av fältnamn
 - Aggregering av data
@@ -705,14 +745,14 @@ Junior har ingen transformation - returnerar rå data som `object`.
 
 ### **5. Mängd kod vs kvalitet på abstraktioner**
 
-| Metric | Novis | Junior | Senior |
-|---|---|---|---|
-| Antal filer | 1 | 2 | 6 |
-| Rader kod | ~35 | ~60 | ~230 |
-| Antal interfaces | 0 | 0 | 2 |
-| Antal models | 0 | 0 | 3 |
-| Testbarhet | Minimal | Svår | Trivial |
-| Change impact | Hög | Medel | Låg |
+| Metric           | Novis   | Junior | Senior  |
+| ---------------- | ------- | ------ | ------- |
+| Antal filer      | 1       | 2      | 6       |
+| Rader kod        | ~35     | ~60    | ~230    |
+| Antal interfaces | 0       | 0      | 2       |
+| Antal models     | 0       | 0      | 3       |
+| Testbarhet       | Minimal | Svår   | Trivial |
+| Change impact    | Hög     | Medel  | Låg     |
 
 Senior-koden är **~4x mer kod**, men **~10x enklare att underhålla och testa**.
 
@@ -735,6 +775,7 @@ Detta visar att **även "novice" code kan innehålla best practices om prompten 
 ## Visualisering av arkitekturen
 
 ### **Novis - Flat Architecture**
+
 ```
 ┌────────────────────────────┐
 │   JobsController           │
@@ -746,6 +787,7 @@ Detta visar att **även "novice" code kan innehålla best practices om prompten 
 ```
 
 ### **Junior - Pseudo-Layered**
+
 ```
 ┌────────────────────────────┐
 │   JobsController           │
@@ -762,6 +804,7 @@ Detta visar att **även "novice" code kan innehålla best practices om prompten 
 ```
 
 ### **Senior - Clean Architecture**
+
 ```
 ┌─────────────────────────────────────┐
 │   JobsController                    │
@@ -817,13 +860,13 @@ public class JobsController : ControllerBase
         {
             var client = _httpClientFactory.CreateClient();
             var response = await client.GetAsync("https://jobsearch.api.jobtechdev.se/search");
-            
+
             if (response.IsSuccessStatusCode)
             {
                 var content = await response.Content.ReadAsStringAsync();
                 return Content(content, "application/json");
             }
-            
+
             return StatusCode((int)response.StatusCode, "Failed to fetch jobs");
         }
         catch (Exception ex)
@@ -885,7 +928,7 @@ public class JobsService
         try
         {
             var response = await _httpClient.GetAsync("search");
-            
+
             if (!response.IsSuccessStatusCode)
             {
                 _logger.LogError("Failed to fetch jobs. Status code: {StatusCode}", response.StatusCode);
@@ -894,7 +937,7 @@ public class JobsService
 
             var content = await response.Content.ReadAsStringAsync();
             var jobs = JsonSerializer.Deserialize<object>(content);
-            
+
             return jobs ?? new { };
         }
         catch (Exception ex)
