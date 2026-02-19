@@ -11,6 +11,7 @@ Analysen identifierade två huvudproblem:
 ### Problem 1: HttpClient BaseAddress-konfiguration
 
 **Symptom:**
+
 - HTTP-anrop till externa API:et misslyckades
 - `InvalidOperationException` kastades från `JobApiClient`
 
@@ -18,6 +19,7 @@ Analysen identifierade två huvudproblem:
 Projektet använde typed HttpClient pattern (`AddHttpClient<IJobApiClient, JobApiClient>()`), men försökte konfigurera `BaseAddress` i klassens konstruktor istället för vid dependency injection-registrering.
 
 **Före:**
+
 ```csharp
 // Program.cs
 builder.Services.AddHttpClient<IJobApiClient, JobApiClient>();
@@ -34,8 +36,9 @@ public JobApiClient(HttpClient httpClient, ILogger<JobApiClient> logger)
 ### Problem 2: JSON-deserialisering
 
 **Symptom:**
+
 ```
-System.Text.Json.JsonException: The JSON value could not be converted to System.Int32. 
+System.Text.Json.JsonException: The JSON value could not be converted to System.Int32.
 Path: $.total | Cannot get the value of a token type 'StartObject' as a number.
 ```
 
@@ -43,6 +46,7 @@ Path: $.total | Cannot get the value of a token type 'StartObject' as a number.
 Arbetsförmedlingens API returnerar `total` som ett objekt med en `value`-property, inte som en direkt integer.
 
 **API-respons:**
+
 ```json
 {
   "total": {
@@ -53,6 +57,7 @@ Arbetsförmedlingens API returnerar `total` som ett objekt med en `value`-proper
 ```
 
 **Före:**
+
 ```csharp
 public class JobSearchResponse
 {
@@ -66,6 +71,7 @@ public class JobSearchResponse
 ### Lösning 1: Flytta HttpClient-konfiguration till DI-registrering
 
 **Program.cs:**
+
 ```csharp
 // Registrera Job-relaterade services (Clean Architecture)
 // Application layer
@@ -79,6 +85,7 @@ builder.Services.AddHttpClient<IJobApiClient, JobApiClient>(client =>
 ```
 
 **JobApiClient.cs:**
+
 ```csharp
 public JobApiClient(HttpClient httpClient, ILogger<JobApiClient> logger)
 {
@@ -91,6 +98,7 @@ public JobApiClient(HttpClient httpClient, ILogger<JobApiClient> logger)
 ### Lösning 2: Uppdatera datamodell för korrekt JSON-mappning
 
 **JobSearchResponse.cs:**
+
 ```csharp
 public class JobSearchResponse
 {
@@ -109,12 +117,14 @@ public class TotalInfo
 Efter refaktoreringen:
 
 ✅ HTTP-anrop till Arbetsförmedlingens API fungerar korrekt
+
 ```
 info: System.Net.Http.HttpClient.IJobApiClient.ClientHandler[101]
       Received HTTP response headers after 1447.9495ms - 200
 ```
 
 ✅ JSON-deserialisering lyckas utan fel
+
 ```
 info: Senior.Services.JobService[0]
       Hämtade 5 jobb
