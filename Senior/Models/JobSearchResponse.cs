@@ -5,8 +5,13 @@ namespace Senior.Models;
 /// </summary>
 public class JobSearchResponse
 {
-    public int Total { get; set; }
+    public TotalInfo? Total { get; set; }
     public List<JobSearchHit> Hits { get; set; } = new();
+}
+
+public class TotalInfo
+{
+    public int Value { get; set; }
 }
 
 public class JobSearchHit

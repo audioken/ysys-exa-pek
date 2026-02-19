@@ -13,7 +13,10 @@ builder.Services.AddScoped<IHealthService, HealthService>();
 builder.Services.AddScoped<IJobService, JobService>();
 
 // Infrastructure layer - HttpClient med typed client pattern
-builder.Services.AddHttpClient<IJobApiClient, JobApiClient>();
+builder.Services.AddHttpClient<IJobApiClient, JobApiClient>(client =>
+{
+    client.BaseAddress = new Uri("https://jobsearch.api.jobtechdev.se/");
+});
 
 var app = builder.Build();
 

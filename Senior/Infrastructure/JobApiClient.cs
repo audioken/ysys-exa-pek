@@ -11,13 +11,10 @@ public class JobApiClient : IJobApiClient
 {
     private readonly HttpClient _httpClient;
     private readonly ILogger<JobApiClient> _logger;
-    private const string BaseUrl = "https://jobsearch.api.jobtechdev.se";
-
     public JobApiClient(HttpClient httpClient, ILogger<JobApiClient> logger)
     {
         _httpClient = httpClient;
         _logger = logger;
-        _httpClient.BaseAddress = new Uri(BaseUrl);
     }
 
     public async Task<JobSearchResponse> SearchJobsAsync(string? query = null, int limit = 10)
