@@ -4,6 +4,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddScoped<HealthService>();
+builder.Services.AddScoped<CvService>();
 
 builder.Services.AddHttpClient<JobsService>(client =>
 {
