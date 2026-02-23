@@ -29,6 +29,16 @@ builder.Services.AddScoped<ISkillExtractor, ProgrammingLanguageExtractor>();
 builder.Services.AddScoped<ISkillExtractor, FrameworkExtractor>();
 builder.Services.AddScoped<ISkillExtractor, SoftSkillExtractor>();
 
+// Registrera matchnings-services (Clean Architecture + Strategy Pattern)
+// Application layer - Service
+builder.Services.AddScoped<IMatchingService, MatchingService>();
+
+// Registrera matchningsstrategier (Strategy Pattern - gör det enkelt att byta/utöka algoritmer)
+// Följer Open/Closed Principle - kan utöka med nya strategier utan att ändra befintlig kod
+// Endast en strategi är aktiv åt gången - byt här för att använda annan strategi
+builder.Services.AddScoped<IMatchingStrategy, SkillBasedMatchingStrategy>();
+// Alternativ: builder.Services.AddScoped<IMatchingStrategy, KeywordMatchingStrategy>();
+
 var app = builder.Build();
 
 app.MapControllers();
