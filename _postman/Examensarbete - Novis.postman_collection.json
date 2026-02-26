@@ -1,0 +1,130 @@
+{
+  "info": {
+    "_postman_id": "8370060c-31ae-40be-90eb-49db0a9567ee",
+    "name": "Examensarbete - Novis",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "41702712",
+    "_collection_link": "https://go.postman.co/collection/41702712-8370060c-31ae-40be-90eb-49db0a9567ee?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{url}}/health",
+          "host": [
+            "{{url}}"
+          ],
+          "path": [
+            "health"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "jobs",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{url}}/jobs",
+          "host": [
+            "{{url}}"
+          ],
+          "path": [
+            "jobs"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "cv analyze",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"CvText\": \"Personuppgifter\\nNamn: Erik Nyström\\nTelefon: 070-445 67 89\\nE-post: erik.nystrom@mail.se\\nOrt: Stockholm\\n\\nProfil\\nSystemutvecklare med 3 års erfarenhet av backendutveckling i .NET-miljö.\\nVan att arbeta agilt i Scrum-team och har ett starkt fokus på kodkvalitet, testbarhet och prestanda.\\n\\nArbetslivserfarenhet\\nSystemutvecklare, Nordic Tech AB (2021–2024)\\n- Utveckling av mikrotjänster i .NET 6 och ASP.NET Core\\n- Databasutveckling och optimering i SQL Server\\n- Enhetstester med xUnit och CI/CD via Azure DevOps\\n- Deltagit i arkitekturdiskussioner och kodgranskningar\\n\\nUtbildning\\nKandidatexamen i Datavetenskap, Stockholms universitet (2018–2021)\\n\\nTekniska kompetenser\\nSpråk: C#, SQL, JavaScript\\nRamverk: .NET, ASP.NET Core, Entity Framework\\nVerktyg: Git, Azure DevOps, Docker\\nMetodik: Scrum, TDD\\n\\nSpråk\\nSvenska (modersmål)\\nEngelska (flytande i tal och skrift)\"\r\n}\r\n",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{url}}/cv/analyze",
+          "host": [
+            "{{url}}"
+          ],
+          "path": [
+            "cv",
+            "analyze"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "match",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"competencies\": [\r\n    \"C#\"\r\n  ],\r\n  \"jobs\": [\r\n    {\r\n      \"id\": \"1\",\r\n      \"title\": \"Senior Backend Developer\",\r\n      \"description\": \"Vi söker en erfaren backend-utvecklare\",\r\n      \"requiredSkills\": [\"C#\", \".NET\", \"SQL\", \"Azure\", \"Docker\"]\r\n    },\r\n    {\r\n      \"id\": \"2\",\r\n      \"title\": \"Frontend Developer\",\r\n      \"description\": \"Frontend-utvecklare med React-kunskap\",\r\n      \"requiredSkills\": [\"JavaScript\", \"React\", \"CSS\", \"HTML\"]\r\n    },\r\n    {\r\n      \"id\": \"3\",\r\n      \"title\": \"Full Stack Developer\",\r\n      \"description\": \"Full stack med både backend och frontend\",\r\n      \"requiredSkills\": [\"C#\", \".NET\", \"JavaScript\", \"React\", \"SQL\"]\r\n    },\r\n    {\r\n      \"id\": \"4\",\r\n      \"title\": \"Python Developer\",\r\n      \"description\": \"Backend-utvecklare med Python\",\r\n      \"requiredSkills\": [\"Python\", \"Django\", \"PostgreSQL\"]\r\n    }\r\n  ]\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{url}}/match",
+          "host": [
+            "{{url}}"
+          ],
+          "path": [
+            "match"
+          ]
+        }
+      },
+      "response": []
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "value": ""
+    },
+    {
+      "value": ""
+    }
+  ]
+}
